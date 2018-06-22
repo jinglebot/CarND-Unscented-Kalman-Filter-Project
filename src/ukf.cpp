@@ -54,6 +54,17 @@ UKF::UKF() {
 
   Hint: one or more values initialized above might be wildly off...
   */
+  ///* initially set to false, set to true in first call of ProcessMeasurement
+  is_initialized_ = false;
+
+  ///* State dimension
+  n_x_ = 5;
+
+  ///* Sigma point spreading parameter
+  lambda_ = 3 - n_x_;
+
+   ///* time when the state is true, in us
+  time_us_ = 0;
 }
 
 UKF::~UKF() {}
@@ -69,6 +80,38 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   Complete this function! Make sure you switch between lidar and radar
   measurements.
   */
+
+  ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
+  if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
+    x_(0) = meas_package.raw_measurements_(0);
+    x_(1) = meas_package.raw_measurements_(1);
+    x_(2) = 0;
+    x_(3) = 0;
+    x_(4) = 0;
+    time_us_ = meas_package.timestamp_;
+  } else {
+    x_(0) = meas_package.raw_measurements_(0);
+    x_(1) = meas_package.raw_measurements_(1);
+    x_(2) = meas_package.raw_measurements_(2);
+    x_(3) = 0;
+    x_(4) = 0;
+    time_us_ = meas_package.timestamp_;
+  }
+
+  P_ << 1, 0, 0, 0, 0,
+      0, 1, 0, 0, 0, 
+      0, 0, 1, 0, 0,
+      0, 0, 0, 1, 0,
+      0, 0, 0, 0, 1;
+
+   ///* Augmented state dimension
+  n_aug_ = 7;
+
+  ///* create sigma point matrix
+  MatrixXd Xsig = MatrixXd(n_x_, 2 * n_x_ + 1);
+
+  ///* calculate square root of P
+  MatrixXd A = P_.llt().matrixL();
 }
 
 /**
