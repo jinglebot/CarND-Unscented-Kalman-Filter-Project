@@ -1,5 +1,6 @@
 #include <uWS/uWS.h>
 #include <iostream>
+#include <fstream>
 #include "json.hpp"
 #include <math.h>
 #include "ukf.h"
@@ -38,7 +39,13 @@ int main()
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
 
-  h.onMessage([&ukf,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  ofstream NIS_file ("NIS.csv");
+  if (!NIS_file.is_open()) {
+	cout << "Unable to open file.\n";
+	//exit(EXIT_FAILURE);
+  }
+
+  h.onMessage([&ukf,&tools,&estimations,&ground_truth,&NIS_file](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -139,7 +146,18 @@ int main()
           auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-	  
+
+          // *************************
+          // NIS values
+          double NIS_laser = ukf.NIS_laser;
+          double NIS_radar = ukf.NIS_radar;
+          //cout << "NIS_laser: " << ukf.NIS_laser << endl;
+          //cout << "NIS_radar: " << ukf.NIS_radar << endl;
+          NIS_file << "t:" << timestamp << "\tL:" << NIS_laser << endl;
+          cout << "t:" << timestamp << "\tL:" << NIS_laser << endl;
+
+          // *************************
+
         }
       } else {
         
@@ -149,6 +167,10 @@ int main()
     }
 
   });
+  if (NIS_file.is_open()) {
+	cout << "Close NIS file.\n";
+	NIS_file.close();
+  }
 
   // We don't need this since we're not using HTTP but if it's removed the program
   // doesn't compile :-(
@@ -185,6 +207,7 @@ int main()
     return -1;
   }
   h.run();
+
 }
 
 
