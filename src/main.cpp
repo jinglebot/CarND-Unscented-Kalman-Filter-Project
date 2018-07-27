@@ -39,13 +39,7 @@ int main()
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
 
-  ofstream NIS_file ("NIS.csv");
-  if (!NIS_file.is_open()) {
-	cout << "Unable to open file.\n";
-	//exit(EXIT_FAILURE);
-  }
-
-  h.onMessage([&ukf,&tools,&estimations,&ground_truth,&NIS_file](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&ukf,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -67,13 +61,13 @@ int main()
           
           MeasurementPackage meas_package;
           istringstream iss(sensor_measurment);
-    	  long long timestamp;
+    	    long long timestamp;
 
-    	  // reads first element from the current line
-    	  string sensor_type;
-    	  iss >> sensor_type;
+      	  // reads first element from the current line
+      	  string sensor_type;
+      	  iss >> sensor_type;
 
-    	  if (sensor_type.compare("L") == 0) {
+    	    if (sensor_type.compare("L") == 0) {
       	  		meas_package.sensor_type_ = MeasurementPackage::LASER;
           		meas_package.raw_measurements_ = VectorXd(2);
           		float px;
@@ -97,7 +91,7 @@ int main()
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
           }
-          float x_gt;
+        float x_gt;
     	  float y_gt;
     	  float vx_gt;
     	  float vy_gt;
@@ -112,7 +106,7 @@ int main()
     	  gt_values(3) = vy_gt;
     	  ground_truth.push_back(gt_values);
           
-          //Call ProcessMeasurment(meas_package) for Kalman filter
+        //Call ProcessMeasurment(meas_package) for Kalman filter
     	  ukf.ProcessMeasurement(meas_package);    	  
 
     	  //Push the current estimated x,y positon from the Kalman filter's state vector
@@ -147,17 +141,6 @@ int main()
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 
-          // *************************
-          // NIS values
-          double NIS_laser = ukf.NIS_laser;
-          double NIS_radar = ukf.NIS_radar;
-          //cout << "NIS_laser: " << ukf.NIS_laser << endl;
-          //cout << "NIS_radar: " << ukf.NIS_radar << endl;
-          NIS_file << "t:" << timestamp << "\tL:" << NIS_laser << endl;
-          cout << "t:" << timestamp << "\tL:" << NIS_laser << endl;
-
-          // *************************
-
         }
       } else {
         
@@ -167,10 +150,6 @@ int main()
     }
 
   });
-  if (NIS_file.is_open()) {
-	cout << "Close NIS file.\n";
-	NIS_file.close();
-  }
 
   // We don't need this since we're not using HTTP but if it's removed the program
   // doesn't compile :-(
